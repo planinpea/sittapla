@@ -1,0 +1,829 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Kanit', sans-serif; background: #f0f4f8; min-height: 100vh; color: #1a2332; }
+
+  /* ===== AUTH SCREENS ===== */
+  .auth-screen { display: flex; min-height: 100vh; }
+  .auth-left { width: 45%; background: linear-gradient(145deg, #0077b6 0%, #023e8a 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; color: white; }
+  .auth-left .logo { font-size: 3rem; margin-bottom: 1rem; }
+  .auth-left h1 { font-size: 1.8rem; font-weight: 600; text-align: center; margin-bottom: 0.5rem; }
+  .auth-left p { font-size: 0.95rem; opacity: 0.8; text-align: center; line-height: 1.6; }
+  .auth-dots { display: flex; gap: 8px; margin-top: 2rem; }
+  .auth-dots span { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); }
+  .auth-dots span.active { background: white; width: 24px; border-radius: 4px; }
+  .auth-right { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+  .auth-card { background: white; border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 420px; box-shadow: 0 8px 40px rgba(0,119,182,0.1); }
+  .auth-card h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.3rem; color: #1a2332; }
+  .auth-card .sub { font-size: 0.9rem; color: #64748b; margin-bottom: 2rem; }
+  .form-group { margin-bottom: 1.2rem; }
+  .form-group label { display: block; font-size: 0.85rem; font-weight: 500; color: #475569; margin-bottom: 0.4rem; }
+  .form-group input { width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 10px; font-family: 'Kanit', sans-serif; font-size: 0.95rem; transition: border-color 0.2s; outline: none; }
+  .form-group input:focus { border-color: #0077b6; }
+  .btn-primary { width: 100%; padding: 0.85rem; background: #0077b6; color: white; border: none; border-radius: 10px; font-family: 'Kanit', sans-serif; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+  .btn-primary:hover { background: #005f92; }
+  .auth-switch { text-align: center; margin-top: 1.2rem; font-size: 0.9rem; color: #64748b; }
+  .auth-switch a { color: #0077b6; cursor: pointer; font-weight: 500; text-decoration: none; }
+  .error-msg { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 0.6rem 0.9rem; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1rem; display: none; }
+
+  /* ===== MAIN APP ===== */
+  .app-screen { display: none; min-height: 100vh; }
+  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 240px; background: #0d1b2a; display: flex; flex-direction: column; z-index: 100; }
+  .sidebar-logo { padding: 1.5rem 1.25rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sidebar-logo .app-name { color: white; font-size: 1rem; font-weight: 600; margin-top: 0.3rem; }
+  .sidebar-logo .app-sub { color: rgba(255,255,255,0.4); font-size: 0.75rem; }
+  .sidebar-user { padding: 0.8rem 1.25rem; background: rgba(255,255,255,0.05); display: flex; align-items: center; gap: 0.7rem; }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #0077b6; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; font-weight: 600; }
+  .user-info .name { color: white; font-size: 0.85rem; font-weight: 500; }
+  .user-info .role { color: rgba(255,255,255,0.4); font-size: 0.75rem; }
+  .sidebar-nav { flex: 1; padding: 1rem 0; }
+  .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 1.25rem; cursor: pointer; transition: all 0.15s; color: rgba(255,255,255,0.55); font-size: 0.9rem; }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+  .nav-item.active { background: rgba(0,119,182,0.25); color: white; border-right: 3px solid #0077b6; }
+  .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+  .sidebar-footer { padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.08); }
+  .logout-btn { display: flex; align-items: center; gap: 0.6rem; color: rgba(255,255,255,0.45); font-size: 0.85rem; cursor: pointer; padding: 0.4rem 0; }
+  .logout-btn:hover { color: #f87171; }
+  .main-content { margin-left: 240px; min-height: 100vh; }
+  .page-header { background: white; padding: 1.25rem 2rem; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; }
+  .page-title { font-size: 1.2rem; font-weight: 600; color: #1a2332; }
+  .page-sub { font-size: 0.8rem; color: #94a3b8; margin-top: 0.1rem; }
+  .content-area { padding: 1.5rem 2rem; }
+
+  /* ===== DASHBOARD ===== */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+  .stat-card { background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid #e2e8f0; }
+  .stat-card .stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: 0.8rem; }
+  .stat-card .stat-val { font-size: 1.8rem; font-weight: 600; color: #1a2332; }
+  .stat-card .stat-lbl { font-size: 0.8rem; color: #94a3b8; margin-top: 0.2rem; }
+  .icon-blue { background: #dbeafe; }
+  .icon-green { background: #dcfce7; }
+  .icon-orange { background: #fed7aa; }
+  .icon-purple { background: #ede9fe; }
+
+  /* ===== TABLES ===== */
+  .section-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 1.5rem; }
+  .section-head { padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+  .section-head h3 { font-size: 1rem; font-weight: 600; color: #1a2332; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 0.7rem 1rem; text-align: left; font-size: 0.8rem; font-weight: 500; color: #64748b; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+  td { padding: 0.8rem 1rem; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fafc; }
+
+  /* ===== BADGES ===== */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 500; }
+  .badge-green { background: #dcfce7; color: #15803d; }
+  .badge-red { background: #fee2e2; color: #dc2626; }
+  .badge-yellow { background: #fef9c3; color: #a16207; }
+  .badge-blue { background: #dbeafe; color: #1d4ed8; }
+  .badge-gray { background: #f1f5f9; color: #64748b; }
+
+  /* ===== BUTTONS ===== */
+  .btn { padding: 0.5rem 1rem; border-radius: 8px; border: none; font-family: 'Kanit', sans-serif; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; border-radius: 6px; }
+  .btn-blue { background: #0077b6; color: white; } .btn-blue:hover { background: #005f92; }
+  .btn-green { background: #2a9d8f; color: white; } .btn-green:hover { background: #21867a; }
+  .btn-red { background: #e76f51; color: white; } .btn-red:hover { background: #d4563a; }
+  .btn-outline { background: white; color: #475569; border: 1px solid #e2e8f0; } .btn-outline:hover { border-color: #94a3b8; background: #f8fafc; }
+  .btn-ghost { background: transparent; color: #475569; } .btn-ghost:hover { background: #f1f5f9; }
+
+  /* ===== ATTENDANCE ===== */
+  .attend-controls { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; }
+  .attend-controls select, .attend-controls input[type=date] { padding: 0.5rem 0.75rem; border: 1.5px solid #e2e8f0; border-radius: 8px; font-family: 'Kanit', sans-serif; font-size: 0.9rem; background: white; outline: none; }
+  .attend-controls select:focus, .attend-controls input[type=date]:focus { border-color: #0077b6; }
+  .attend-row { display: flex; align-items: center; padding: 0.8rem 1.25rem; border-bottom: 1px solid #f1f5f9; gap: 1rem; }
+  .attend-row:last-child { border-bottom: none; }
+  .attend-row:hover { background: #f8fafc; }
+  .attend-num { width: 28px; height: 28px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; color: #64748b; flex-shrink: 0; }
+  .attend-name { flex: 1; font-size: 0.92rem; color: #1e293b; font-weight: 500; }
+  .attend-btns { display: flex; gap: 0.4rem; }
+  .status-btn { padding: 0.3rem 0.7rem; border-radius: 6px; border: 1.5px solid transparent; font-family: 'Kanit', sans-serif; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.15s; opacity: 0.45; }
+  .status-btn.active { opacity: 1; }
+  .s-present { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+  .s-present.active { background: #16a34a; color: white; }
+  .s-absent { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
+  .s-absent.active { background: #dc2626; color: white; }
+  .s-leave { border-color: #d97706; color: #d97706; background: #fffbeb; }
+  .s-leave.active { background: #d97706; color: white; }
+  .s-sick { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
+  .s-sick.active { background: #2563eb; color: white; }
+
+  /* ===== ASSIGNMENT ===== */
+  .assign-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; padding: 1.25rem; }
+  .assign-card { background: white; border-radius: 10px; border: 1px solid #e2e8f0; padding: 1rem; cursor: pointer; transition: all 0.15s; }
+  .assign-card:hover { border-color: #0077b6; box-shadow: 0 2px 12px rgba(0,119,182,0.1); }
+  .assign-card .ac-subject { font-size: 0.75rem; font-weight: 500; color: #0077b6; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+  .assign-card .ac-name { font-size: 0.95rem; font-weight: 600; color: #1a2332; margin-bottom: 0.5rem; }
+  .assign-card .ac-meta { font-size: 0.8rem; color: #94a3b8; }
+  .assign-card .ac-progress { margin-top: 0.8rem; }
+  .progress-bar { height: 5px; background: #f1f5f9; border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; background: #2a9d8f; transition: width 0.3s; }
+  .assign-card .ac-stats { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
+
+  /* ===== MODAL ===== */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.5); z-index: 999; display: flex; align-items: center; justify-content: center; display: none; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; border-radius: 16px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; }
+  .modal-head { padding: 1.25rem 1.5rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+  .modal-head h3 { font-size: 1.05rem; font-weight: 600; }
+  .modal-close { background: #f1f5f9; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; color: #475569; }
+  .modal-body { padding: 1.25rem 1.5rem; }
+  .modal-foot { padding: 1rem 1.5rem; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 0.6rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .form-group2 label { display: block; font-size: 0.82rem; font-weight: 500; color: #475569; margin-bottom: 0.35rem; }
+  .form-group2 input, .form-group2 select { width: 100%; padding: 0.6rem 0.8rem; border: 1.5px solid #e2e8f0; border-radius: 8px; font-family: 'Kanit', sans-serif; font-size: 0.9rem; outline: none; }
+  .form-group2 input:focus, .form-group2 select:focus { border-color: #0077b6; }
+
+  /* ===== GRADE TABLE ===== */
+  .grade-input { width: 60px; padding: 0.3rem 0.5rem; border: 1.5px solid #e2e8f0; border-radius: 6px; font-family: 'Kanit', sans-serif; font-size: 0.85rem; text-align: center; outline: none; }
+  .grade-input:focus { border-color: #0077b6; }
+  .submit-sel { padding: 0.3rem 0.6rem; border: 1.5px solid #e2e8f0; border-radius: 6px; font-family: 'Kanit', sans-serif; font-size: 0.78rem; background: white; outline: none; cursor: pointer; }
+  .submit-sel.s-submitted { background: #dcfce7; border-color: #86efac; color: #15803d; }
+  .submit-sel.s-late { background: #fef9c3; border-color: #fde047; color: #a16207; }
+  .submit-sel.s-missing { background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
+
+  /* ===== EMPTY STATE ===== */
+  .empty { text-align: center; padding: 3rem; color: #94a3b8; }
+  .empty-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+  .empty p { font-size: 0.95rem; }
+
+  /* ===== TOAST ===== */
+  .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #1a2332; color: white; padding: 0.75rem 1.2rem; border-radius: 10px; font-size: 0.88rem; z-index: 9999; transform: translateY(80px); opacity: 0; transition: all 0.3s; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ===== HIDDEN ===== */
+  .page { display: none; }
+  .page.active { display: block; }
+</style>
+
+<div id="root"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== STATE =====
+let currentUser = null;
+let currentPage = 'dashboard';
+
+// Demo data
+const DEMO_USERS = {
+  'teacher@demo.com': { password: '123456', name: 'อ.สมหญิง ใจดี', initials: 'สจ' },
+  'teacher2@demo.com': { password: '123456', name: 'อ.ประสิทธิ์ เก่งกาจ', initials: 'ปก' }
+};
+
+const DB = {
+  'teacher@demo.com': {
+    classes: [
+      { id: 'c1', name: 'ม.1/1' },
+      { id: 'c2', name: 'ม.2/3' },
+      { id: 'c3', name: 'ม.3/2' }
+    ],
+    subjects: [
+      { id: 's1', name: 'คณิตศาสตร์', color: '#0077b6' },
+      { id: 's2', name: 'ภาษาอังกฤษ', color: '#2a9d8f' },
+      { id: 's3', name: 'วิทยาศาสตร์', color: '#e76f51' }
+    ],
+    students: {
+      'c1': [
+        { id: 'st1', num: 1, name: 'อรุณี วงศ์สวัสดิ์' },
+        { id: 'st2', num: 2, name: 'กิตติพงศ์ ชัยรัตน์' },
+        { id: 'st3', num: 3, name: 'ปิยะมาศ ทองดี' },
+        { id: 'st4', num: 4, name: 'ธนาคาร สุขใจ' },
+        { id: 'st5', num: 5, name: 'วริษา เพ็ชรรัตน์' }
+      ],
+      'c2': [
+        { id: 'st6', num: 1, name: 'สุชาติ มีสุข' },
+        { id: 'st7', num: 2, name: 'พิมพ์พิสุทธิ์ แสงดาว' },
+        { id: 'st8', num: 3, name: 'ณัฐพงศ์ ศรีสมบูรณ์' }
+      ],
+      'c3': []
+    },
+    attendance: {},
+    assignments: [
+      { id: 'a1', name: 'แบบฝึกหัดบทที่ 3', subject: 's1', classId: 'c1', maxScore: 10, createdAt: '2024-01-15' },
+      { id: 'a2', name: 'Reading Comprehension Unit 2', subject: 's2', classId: 'c1', maxScore: 20, createdAt: '2024-01-16' }
+    ],
+    grades: {
+      'a1': { 'st1': { status: 'submitted', score: 9 }, 'st2': { status: 'submitted', score: 7 }, 'st3': { status: 'late', score: 6 }, 'st4': { status: 'missing', score: 0 }, 'st5': { status: 'submitted', score: 10 } },
+      'a2': { 'st1': { status: 'submitted', score: 18 }, 'st2': { status: 'missing', score: 0 }, 'st3': { status: 'submitted', score: 15 } }
+    }
+  }
+};
+
+function getData() { return DB[currentUser] || null; }
+function getStudents(classId) { return getData()?.students?.[classId] || []; }
+function getClass(id) { return getData()?.classes?.find(c => c.id === id); }
+function getSubject(id) { return getData()?.subjects?.find(s => s.id === id); }
+
+// ===== TOAST =====
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ===== ROUTING =====
+function showPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page)?.classList.add('active');
+  renderPage(page);
+}
+
+function renderPage(page) {
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'classes') renderClasses();
+  if (page === 'attendance') renderAttendance();
+  if (page === 'assignments') renderAssignments();
+}
+
+// ===== AUTH =====
+function renderAuth(mode) {
+  document.getElementById('root').innerHTML = `
+    <div class="auth-screen">
+      <div class="auth-left">
+        <div class="logo">📚</div>
+        <h1>ระบบบริหารจัดการชั้นเรียน</h1>
+        <p>เช็คชื่อนักเรียน ติดตามงาน และบริหารชั้นเรียนได้อย่างมืออาชีพ</p>
+        <div class="auth-dots">
+          <span class="active"></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="auth-right">
+        <div class="auth-card">
+          <h2>${mode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครใช้งาน'}</h2>
+          <p class="sub">${mode === 'login' ? 'ยินดีต้อนรับกลับมา คุณครู 👋' : 'สร้างบัญชีผู้สอนใหม่'}</p>
+          <div class="error-msg" id="auth-error"></div>
+          ${mode === 'signup' ? `<div class="form-group"><label>ชื่อ-นามสกุล</label><input type="text" id="inp-name" placeholder="อ.ชื่อ นามสกุล"></div>` : ''}
+          <div class="form-group"><label>อีเมล</label><input type="email" id="inp-email" placeholder="teacher@school.com" value="${mode === 'login' ? 'teacher@demo.com' : ''}"></div>
+          <div class="form-group"><label>รหัสผ่าน</label><input type="password" id="inp-pass" placeholder="••••••••" value="${mode === 'login' ? '123456' : ''}"></div>
+          <button class="btn-primary" onclick="handleAuth('${mode}')">${mode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครใช้งาน'}</button>
+          <div class="auth-switch">${mode === 'login' 
+            ? 'ยังไม่มีบัญชี? <a onclick="renderAuth(\'signup\')">สมัครใช้งาน</a>'
+            : 'มีบัญชีแล้ว? <a onclick="renderAuth(\'login\')">เข้าสู่ระบบ</a>'}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function handleAuth(mode) {
+  const email = document.getElementById('inp-email').value.trim();
+  const pass = document.getElementById('inp-pass').value;
+  const errEl = document.getElementById('auth-error');
+  errEl.style.display = 'none';
+
+  if (mode === 'login') {
+    const user = DEMO_USERS[email];
+    if (!user || user.password !== pass) {
+      errEl.textContent = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง (ทดลอง: teacher@demo.com / 123456)';
+      errEl.style.display = 'block'; return;
+    }
+    currentUser = email;
+    renderApp();
+  } else {
+    const name = document.getElementById('inp-name')?.value.trim();
+    if (!name || !email || !pass) { errEl.textContent = 'กรุณากรอกข้อมูลให้ครบถ้วน'; errEl.style.display = 'block'; return; }
+    if (DEMO_USERS[email]) { errEl.textContent = 'อีเมลนี้ถูกใช้งานแล้ว'; errEl.style.display = 'block'; return; }
+    DEMO_USERS[email] = { password: pass, name, initials: name.slice(0, 2) };
+    DB[email] = { classes: [], subjects: [], students: {}, attendance: {}, assignments: [], grades: {} };
+    currentUser = email;
+    renderApp();
+  }
+}
+
+// ===== MAIN APP SHELL =====
+function renderApp() {
+  const user = DEMO_USERS[currentUser];
+  document.getElementById('root').innerHTML = `
+    <div class="app-screen" style="display:block">
+      <div class="sidebar">
+        <div class="sidebar-logo">
+          <div style="font-size:1.4rem">📚</div>
+          <div class="app-name">ClassManager</div>
+          <div class="app-sub">ระบบจัดการชั้นเรียน</div>
+        </div>
+        <div class="sidebar-user">
+          <div class="user-avatar">${user.initials}</div>
+          <div class="user-info">
+            <div class="name">${user.name}</div>
+            <div class="role">ครูผู้สอน</div>
+          </div>
+        </div>
+        <nav class="sidebar-nav">
+          <div class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
+            <span class="nav-icon">🏠</span> แดชบอร์ด
+          </div>
+          <div class="nav-item" data-page="classes" onclick="showPage('classes')">
+            <span class="nav-icon">🏫</span> ชั้นเรียนและนักเรียน
+          </div>
+          <div class="nav-item" data-page="attendance" onclick="showPage('attendance')">
+            <span class="nav-icon">✅</span> เช็คชื่อเข้าเรียน
+          </div>
+          <div class="nav-item" data-page="assignments" onclick="showPage('assignments')">
+            <span class="nav-icon">📝</span> งานและคะแนน
+          </div>
+        </nav>
+        <div class="sidebar-footer">
+          <div class="logout-btn" onclick="logout()">🚪 ออกจากระบบ</div>
+        </div>
+      </div>
+      <div class="main-content">
+        <div class="page active" id="page-dashboard"></div>
+        <div class="page" id="page-classes"></div>
+        <div class="page" id="page-attendance"></div>
+        <div class="page" id="page-assignments"></div>
+      </div>
+    </div>
+    <div id="modal-container"></div>
+  `;
+  currentPage = 'dashboard';
+  renderDashboard();
+}
+
+function logout() { currentUser = null; renderAuth('login'); }
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  const data = getData();
+  if (!data) return;
+  const totalStudents = Object.values(data.students).flat().length;
+  const el = document.getElementById('page-dashboard');
+  el.innerHTML = `
+    <div class="page-header">
+      <div><div class="page-title">แดชบอร์ด</div><div class="page-sub">ภาพรวมข้อมูลชั้นเรียน</div></div>
+      <span style="font-size:0.85rem;color:#94a3b8">${new Date().toLocaleDateString('th-TH', {weekday:'long',year:'numeric',month:'long',day:'numeric'})}</span>
+    </div>
+    <div class="content-area">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon icon-blue">🏫</div><div class="stat-val">${data.classes.length}</div><div class="stat-lbl">ชั้นเรียนทั้งหมด</div></div>
+        <div class="stat-card"><div class="stat-icon icon-green">👩‍🎓</div><div class="stat-val">${totalStudents}</div><div class="stat-lbl">นักเรียนทั้งหมด</div></div>
+        <div class="stat-card"><div class="stat-icon icon-orange">📚</div><div class="stat-val">${data.subjects.length}</div><div class="stat-lbl">วิชาที่สอน</div></div>
+        <div class="stat-card"><div class="stat-icon icon-purple">📝</div><div class="stat-val">${data.assignments.length}</div><div class="stat-lbl">งานที่มอบหมาย</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="section-card">
+          <div class="section-head"><h3>ชั้นเรียนของคุณ</h3><button class="btn btn-sm btn-outline" onclick="showPage('classes')">ดูทั้งหมด</button></div>
+          ${data.classes.length === 0 ? `<div class="empty"><div class="empty-icon">🏫</div><p>ยังไม่มีชั้นเรียน</p></div>` :
+          `<table><thead><tr><th>ชั้นเรียน</th><th>จำนวนนักเรียน</th><th>จัดการ</th></tr></thead><tbody>
+            ${data.classes.map(c => `<tr>
+              <td><strong>${c.name}</strong></td>
+              <td><span class="badge badge-blue">${getStudents(c.id).length} คน</span></td>
+              <td><button class="btn btn-sm btn-outline" onclick="showPage('attendance')">เช็คชื่อ</button></td>
+            </tr>`).join('')}
+          </tbody></table>`}
+        </div>
+        <div class="section-card">
+          <div class="section-head"><h3>งานล่าสุด</h3><button class="btn btn-sm btn-outline" onclick="showPage('assignments')">ดูทั้งหมด</button></div>
+          ${data.assignments.length === 0 ? `<div class="empty"><div class="empty-icon">📝</div><p>ยังไม่มีงาน</p></div>` :
+          `<table><thead><tr><th>ชื่องาน</th><th>วิชา</th><th>คะแนนเต็ม</th></tr></thead><tbody>
+            ${data.assignments.slice(-5).map(a => `<tr>
+              <td>${a.name}</td>
+              <td><span class="badge badge-blue">${getSubject(a.subject)?.name || '-'}</span></td>
+              <td>${a.maxScore}</td>
+            </tr>`).join('')}
+          </tbody></table>`}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ===== CLASSES PAGE =====
+function renderClasses() {
+  const data = getData();
+  const el = document.getElementById('page-classes');
+  el.innerHTML = `
+    <div class="page-header">
+      <div><div class="page-title">ชั้นเรียนและนักเรียน</div><div class="page-sub">จัดการข้อมูลชั้นเรียน วิชา และนักเรียน</div></div>
+    </div>
+    <div class="content-area">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+        <div>
+          <div class="section-card">
+            <div class="section-head">
+              <h3>🏫 ชั้นเรียน</h3>
+              <button class="btn btn-sm btn-blue" onclick="openAddClass()">+ เพิ่มชั้นเรียน</button>
+            </div>
+            ${data.classes.length === 0 ? `<div class="empty"><p>ยังไม่มีชั้นเรียน</p></div>` :
+            `<table><thead><tr><th>ชั้นเรียน</th><th>นักเรียน</th><th></th></tr></thead><tbody>
+              ${data.classes.map(c => `<tr>
+                <td><strong>${c.name}</strong></td>
+                <td>${getStudents(c.id).length} คน</td>
+                <td style="text-align:right">
+                  <button class="btn btn-sm btn-outline" onclick="openStudents('${c.id}')">จัดการนักเรียน</button>
+                  <button class="btn btn-sm btn-ghost" onclick="deleteClass('${c.id}')" style="color:#ef4444;margin-left:4px">ลบ</button>
+                </td>
+              </tr>`).join('')}
+            </tbody></table>`}
+          </div>
+        </div>
+        <div>
+          <div class="section-card">
+            <div class="section-head">
+              <h3>📚 วิชา</h3>
+              <button class="btn btn-sm btn-green" onclick="openAddSubject()">+ เพิ่มวิชา</button>
+            </div>
+            ${data.subjects.length === 0 ? `<div class="empty"><p>ยังไม่มีวิชา</p></div>` :
+            `<table><thead><tr><th>วิชา</th><th></th></tr></thead><tbody>
+              ${data.subjects.map(s => `<tr>
+                <td><span class="badge" style="background:${s.color}22;color:${s.color}">${s.name}</span></td>
+                <td style="text-align:right"><button class="btn btn-sm btn-ghost" onclick="deleteSubject('${s.id}')" style="color:#ef4444">ลบ</button></td>
+              </tr>`).join('')}
+            </tbody></table>`}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function openAddClass() {
+  document.getElementById('modal-container').innerHTML = `
+    <div class="modal-overlay open" id="modal">
+      <div class="modal">
+        <div class="modal-head"><h3>เพิ่มชั้นเรียน</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+          <div class="form-group2"><label>ชื่อชั้นเรียน</label><input type="text" id="m-class" placeholder="เช่น ม.1/1"></div>
+        </div>
+        <div class="modal-foot"><button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button><button class="btn btn-blue" onclick="addClassConfirm()">เพิ่มชั้นเรียน</button></div>
+      </div>
+    </div>`;
+}
+
+function addClassConfirm() {
+  const name = document.getElementById('m-class').value.trim();
+  if (!name) return;
+  const data = getData();
+  const id = 'c' + Date.now();
+  data.classes.push({ id, name });
+  data.students[id] = [];
+  closeModal(); renderClasses(); toast('✅ เพิ่มชั้นเรียน ' + name + ' แล้ว');
+}
+
+function deleteClass(id) {
+  if (!confirm('ลบชั้นเรียนนี้?')) return;
+  const data = getData();
+  data.classes = data.classes.filter(c => c.id !== id);
+  delete data.students[id];
+  renderClasses(); toast('🗑️ ลบชั้นเรียนแล้ว');
+}
+
+function openAddSubject() {
+  document.getElementById('modal-container').innerHTML = `
+    <div class="modal-overlay open" id="modal">
+      <div class="modal">
+        <div class="modal-head"><h3>เพิ่มวิชา</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+          <div class="form-group2"><label>ชื่อวิชา</label><input type="text" id="m-subj" placeholder="เช่น คณิตศาสตร์"></div>
+        </div>
+        <div class="modal-foot"><button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button><button class="btn btn-green" onclick="addSubjConfirm()">เพิ่มวิชา</button></div>
+      </div>
+    </div>`;
+}
+
+function addSubjConfirm() {
+  const name = document.getElementById('m-subj').value.trim();
+  if (!name) return;
+  const data = getData();
+  const colors = ['#0077b6','#2a9d8f','#e76f51','#7209b7','#f4a261'];
+  data.subjects.push({ id: 's' + Date.now(), name, color: colors[data.subjects.length % colors.length] });
+  closeModal(); renderClasses(); toast('✅ เพิ่มวิชา ' + name + ' แล้ว');
+}
+
+function deleteSubject(id) {
+  if (!confirm('ลบวิชานี้?')) return;
+  getData().subjects = getData().subjects.filter(s => s.id !== id);
+  renderClasses(); toast('🗑️ ลบวิชาแล้ว');
+}
+
+function openStudents(classId) {
+  const cls = getClass(classId);
+  const students = getStudents(classId);
+  document.getElementById('modal-container').innerHTML = `
+    <div class="modal-overlay open" id="modal">
+      <div class="modal" style="max-width:540px">
+        <div class="modal-head"><h3>นักเรียน ${cls.name}</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+          <div class="section-head" style="padding:0 0 0.75rem;margin-bottom:0.75rem;border-bottom:1px solid #f1f5f9">
+            <span style="font-size:0.85rem;color:#64748b">${students.length} คน</span>
+            <button class="btn btn-sm btn-blue" onclick="openAddStudent('${classId}')">+ เพิ่มนักเรียน</button>
+          </div>
+          <div id="student-list">
+          ${students.length === 0 ? `<div class="empty" style="padding:1.5rem"><p>ยังไม่มีนักเรียน</p></div>` :
+          `<table style="width:100%"><thead><tr><th>เลขที่</th><th>ชื่อ-นามสกุล</th><th></th></tr></thead><tbody>
+            ${students.map(s => `<tr>
+              <td>${s.num}</td><td>${s.name}</td>
+              <td><button class="btn btn-sm btn-ghost" onclick="deleteStudent('${classId}','${s.id}')" style="color:#ef4444">ลบ</button></td>
+            </tr>`).join('')}
+          </tbody></table>`}
+          </div>
+        </div>
+        <div class="modal-foot"><button class="btn btn-outline" onclick="closeModal()">ปิด</button></div>
+      </div>
+    </div>`;
+}
+
+function openAddStudent(classId) {
+  const students = getStudents(classId);
+  const nextNum = (students.length > 0 ? Math.max(...students.map(s => s.num)) + 1 : 1);
+  document.getElementById('modal-container').innerHTML = `
+    <div class="modal-overlay open" id="modal">
+      <div class="modal">
+        <div class="modal-head"><h3>เพิ่มนักเรียน</h3><button class="modal-close" onclick="openStudents('${classId}')">✕</button></div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group2"><label>เลขที่</label><input type="number" id="m-num" value="${nextNum}" min="1"></div>
+            <div class="form-group2"><label>ชื่อ-นามสกุล</label><input type="text" id="m-sname" placeholder="ชื่อ นามสกุล"></div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-outline" onclick="openStudents('${classId}')">ยกเลิก</button>
+          <button class="btn btn-blue" onclick="addStudentConfirm('${classId}')">เพิ่ม</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function addStudentConfirm(classId) {
+  const num = parseInt(document.getElementById('m-num').value);
+  const name = document.getElementById('m-sname').value.trim();
+  if (!name || !num) return;
+  getData().students[classId].push({ id: 'st' + Date.now(), num, name });
+  getData().students[classId].sort((a, b) => a.num - b.num);
+  openStudents(classId); renderClasses(); toast('✅ เพิ่มนักเรียนแล้ว');
+}
+
+function deleteStudent(classId, studentId) {
+  if (!confirm('ลบนักเรียนนี้?')) return;
+  getData().students[classId] = getData().students[classId].filter(s => s.id !== studentId);
+  openStudents(classId); renderClasses(); toast('🗑️ ลบนักเรียนแล้ว');
+}
+
+function closeModal() { document.getElementById('modal-container').innerHTML = ''; }
+
+// ===== ATTENDANCE =====
+let attState = { classId: '', date: new Date().toISOString().split('T')[0], records: {} };
+
+function renderAttendance() {
+  const data = getData();
+  const el = document.getElementById('page-attendance');
+  const classOptions = data.classes.map(c => `<option value="${c.id}" ${c.id === attState.classId ? 'selected' : ''}>${c.name}</option>`).join('');
+  if (!attState.classId && data.classes.length > 0) attState.classId = data.classes[0].id;
+  loadAttendanceRecords();
+  const students = getStudents(attState.classId);
+
+  el.innerHTML = `
+    <div class="page-header">
+      <div><div class="page-title">เช็คชื่อเข้าเรียน</div><div class="page-sub">บันทึกการมาเรียนประจำวัน</div></div>
+    </div>
+    <div class="content-area">
+      <div class="section-card">
+        <div class="attend-controls">
+          <select onchange="attState.classId=this.value;loadAttendanceRecords();renderAttendance()" style="min-width:120px">
+            <option value="">-- เลือกชั้นเรียน --</option>${classOptions}
+          </select>
+          <input type="date" value="${attState.date}" onchange="attState.date=this.value;loadAttendanceRecords();renderAttendance()">
+          <button class="btn btn-green btn-sm" onclick="markAll('present')">✅ มาทั้งหมด</button>
+          <button class="btn btn-blue btn-sm" onclick="saveAttendance()">💾 บันทึก</button>
+          <span id="att-summary" style="font-size:0.85rem;color:#64748b;margin-left:auto"></span>
+        </div>
+        <div id="att-list">
+          ${students.length === 0
+            ? `<div class="empty"><div class="empty-icon">👥</div><p>${attState.classId ? 'ยังไม่มีนักเรียนในชั้นนี้' : 'กรุณาเลือกชั้นเรียน'}</p></div>`
+            : students.map(s => {
+                const status = attState.records[s.id] || '';
+                return `<div class="attend-row">
+                  <div class="attend-num">${s.num}</div>
+                  <div class="attend-name">${s.name}</div>
+                  <div class="attend-btns">
+                    <button class="status-btn s-present ${status==='present'?'active':''}" onclick="setStatus('${s.id}','present',this)">มา</button>
+                    <button class="status-btn s-absent ${status==='absent'?'active':''}" onclick="setStatus('${s.id}','absent',this)">ขาด</button>
+                    <button class="status-btn s-leave ${status==='leave'?'active':''}" onclick="setStatus('${s.id}','leave',this)">ลา</button>
+                    <button class="status-btn s-sick ${status==='sick'?'active':''}" onclick="setStatus('${s.id}','sick',this)">ป่วย</button>
+                  </div>
+                </div>`;
+              }).join('')}
+        </div>
+      </div>
+      ${renderAttHistory()}
+    </div>`;
+  updateAttSummary();
+}
+
+function loadAttendanceRecords() {
+  const key = `${attState.classId}_${attState.date}`;
+  attState.records = getData()?.attendance?.[key] || {};
+}
+
+function setStatus(studentId, status, btn) {
+  attState.records[studentId] = status;
+  const row = btn.closest('.attend-row');
+  row.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateAttSummary();
+}
+
+function updateAttSummary() {
+  const counts = { present: 0, absent: 0, leave: 0, sick: 0 };
+  Object.values(attState.records).forEach(s => { if (counts[s] !== undefined) counts[s]++; });
+  const el = document.getElementById('att-summary');
+  if (el) el.innerHTML = `มา <strong style="color:#16a34a">${counts.present}</strong> | ขาด <strong style="color:#dc2626">${counts.absent}</strong> | ลา <strong style="color:#d97706">${counts.leave}</strong> | ป่วย <strong style="color:#2563eb">${counts.sick}</strong>`;
+}
+
+function markAll(status) {
+  const students = getStudents(attState.classId);
+  students.forEach(s => attState.records[s.id] = status);
+  renderAttendance();
+}
+
+function saveAttendance() {
+  const key = `${attState.classId}_${attState.date}`;
+  getData().attendance[key] = { ...attState.records };
+  toast('💾 บันทึกการเช็คชื่อแล้ว');
+}
+
+function renderAttHistory() {
+  const data = getData();
+  const cls = getClass(attState.classId);
+  if (!cls) return '';
+  const entries = Object.entries(data.attendance)
+    .filter(([k]) => k.startsWith(attState.classId + '_'))
+    .sort((a, b) => b[0].localeCompare(a[0])).slice(0, 5);
+  if (entries.length === 0) return '';
+  const students = getStudents(attState.classId);
+  return `<div class="section-card" style="margin-top:1rem">
+    <div class="section-head"><h3>ประวัติการเช็คชื่อ — ${cls.name}</h3></div>
+    <table><thead><tr><th>วันที่</th>${students.map(s => `<th>${s.num}</th>`).join('')}</tr></thead><tbody>
+      ${entries.map(([key, rec]) => {
+        const date = key.split('_')[1];
+        return `<tr><td style="font-size:0.82rem;white-space:nowrap">${date}</td>${students.map(s => {
+          const st = rec[s.id];
+          const badge = { present: '<span style="color:#16a34a">●</span>', absent: '<span style="color:#dc2626">●</span>', leave: '<span style="color:#d97706">●</span>', sick: '<span style="color:#2563eb">●</span>' };
+          return `<td style="text-align:center">${badge[st] || '—'}</td>`;
+        }).join('')}</tr>`;
+      }).join('')}
+    </tbody></table>
+  </div>`;
+}
+
+// ===== ASSIGNMENTS =====
+let selectedAssign = null;
+
+function renderAssignments() {
+  const data = getData();
+  const el = document.getElementById('page-assignments');
+  el.innerHTML = `
+    <div class="page-header">
+      <div><div class="page-title">งานและคะแนน</div><div class="page-sub">มอบหมายงานและบันทึกคะแนน</div></div>
+      <button class="btn btn-blue" onclick="openAddAssignment()">+ สร้างงานใหม่</button>
+    </div>
+    <div class="content-area">
+      ${data.assignments.length === 0 ? `<div class="empty" style="padding:4rem"><div class="empty-icon">📝</div><p>ยังไม่มีงาน กด "สร้างงานใหม่" เพื่อเริ่มต้น</p></div>` : `
+      <div class="assign-grid">
+        ${data.assignments.map(a => {
+          const students = getStudents(a.classId);
+          const grades = data.grades[a.id] || {};
+          const submitted = students.filter(s => grades[s.id]?.status === 'submitted').length;
+          const pct = students.length ? Math.round(submitted / students.length * 100) : 0;
+          return `<div class="assign-card" onclick="openGrades('${a.id}')">
+            <div class="ac-subject">${getSubject(a.subject)?.name || 'ไม่ระบุวิชา'} — ${getClass(a.classId)?.name || ''}</div>
+            <div class="ac-name">${a.name}</div>
+            <div class="ac-meta">คะแนนเต็ม ${a.maxScore} คะแนน</div>
+            <div class="ac-progress">
+              <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:#94a3b8;margin-bottom:4px">
+                <span>ส่งแล้ว ${submitted}/${students.length}</span><span>${pct}%</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+            </div>
+            <div class="ac-stats">
+              <span class="badge badge-green">ส่ง ${submitted}</span>
+              <span class="badge badge-red">ขาด ${students.filter(s => grades[s.id]?.status === 'missing').length}</span>
+              <span class="badge badge-yellow">ช้า ${students.filter(s => grades[s.id]?.status === 'late').length}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      ${selectedAssign ? renderGradeTable() : ''}`}
+    </div>`;
+}
+
+function openAddAssignment() {
+  const data = getData();
+  const clsOpts = data.classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  const subjOpts = data.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  document.getElementById('modal-container').innerHTML = `
+    <div class="modal-overlay open" id="modal">
+      <div class="modal">
+        <div class="modal-head"><h3>สร้างงานใหม่</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">
+          <div class="form-group2" style="margin-bottom:0.8rem"><label>ชื่องาน/การบ้าน</label><input type="text" id="m-aname" placeholder="เช่น แบบฝึกหัดบทที่ 5"></div>
+          <div class="form-row" style="margin-bottom:0.8rem">
+            <div class="form-group2"><label>ชั้นเรียน</label><select id="m-acls">${clsOpts}</select></div>
+            <div class="form-group2"><label>วิชา</label><select id="m-asubj">${subjOpts}</select></div>
+          </div>
+          <div class="form-group2"><label>คะแนนเต็ม</label><input type="number" id="m-ascore" value="10" min="1"></div>
+        </div>
+        <div class="modal-foot"><button class="btn btn-outline" onclick="closeModal()">ยกเลิก</button><button class="btn btn-blue" onclick="addAssignConfirm()">สร้างงาน</button></div>
+      </div>
+    </div>`;
+}
+
+function addAssignConfirm() {
+  const name = document.getElementById('m-aname').value.trim();
+  const classId = document.getElementById('m-acls').value;
+  const subject = document.getElementById('m-asubj').value;
+  const maxScore = parseInt(document.getElementById('m-ascore').value);
+  if (!name) return;
+  const data = getData();
+  const id = 'a' + Date.now();
+  data.assignments.push({ id, name, classId, subject, maxScore, createdAt: new Date().toISOString().split('T')[0] });
+  data.grades[id] = {};
+  closeModal(); selectedAssign = id; renderAssignments(); toast('✅ สร้างงาน "' + name + '" แล้ว');
+}
+
+function openGrades(assignId) {
+  selectedAssign = assignId;
+  renderAssignments();
+  setTimeout(() => document.getElementById('grade-table')?.scrollIntoView({ behavior: 'smooth' }), 100);
+}
+
+function renderGradeTable() {
+  const data = getData();
+  const assign = data.assignments.find(a => a.id === selectedAssign);
+  if (!assign) return '';
+  const students = getStudents(assign.classId);
+  const grades = data.grades[selectedAssign] || {};
+  const totalScore = students.reduce((sum, s) => sum + (grades[s.id]?.score || 0), 0);
+  const avg = students.length ? (totalScore / students.length).toFixed(1) : 0;
+
+  return `<div class="section-card" id="grade-table">
+    <div class="section-head">
+      <div>
+        <h3>📋 ${assign.name}</h3>
+        <span style="font-size:0.8rem;color:#94a3b8">คะแนนเต็ม ${assign.maxScore} | เฉลี่ย ${avg} คะแนน | ${getClass(assign.classId)?.name}</span>
+      </div>
+      <div style="display:flex;gap:0.5rem">
+        <button class="btn btn-sm btn-outline" onclick="saveGrades()">💾 บันทึกคะแนน</button>
+        <button class="btn btn-sm btn-ghost" onclick="selectedAssign=null;renderAssignments()">✕</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>เลขที่</th><th>ชื่อ-นามสกุล</th><th>สถานะ</th><th>คะแนน</th><th>% คะแนน</th></tr></thead>
+      <tbody>
+        ${students.map(s => {
+          const g = grades[s.id] || { status: 'missing', score: 0 };
+          const pct = assign.maxScore ? Math.round(g.score / assign.maxScore * 100) : 0;
+          return `<tr>
+            <td>${s.num}</td>
+            <td>${s.name}</td>
+            <td>
+              <select class="submit-sel s-${g.status}" onchange="updateStatus('${s.id}',this)" data-sid="${s.id}">
+                <option value="submitted" ${g.status==='submitted'?'selected':''}>✅ ส่งแล้ว</option>
+                <option value="late" ${g.status==='late'?'selected':''}>⏰ ส่งช้า</option>
+                <option value="missing" ${g.status==='missing'?'selected':''}>❌ ยังไม่ส่ง</option>
+              </select>
+            </td>
+            <td><input class="grade-input" type="number" min="0" max="${assign.maxScore}" value="${g.score}" onchange="updateScore('${s.id}',this)" data-sid="${s.id}"> / ${assign.maxScore}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:60px;height:6px;background:#f1f5f9;border-radius:99px;overflow:hidden">
+                  <div style="width:${pct}%;height:100%;background:${pct>=70?'#16a34a':pct>=50?'#d97706':'#dc2626'};border-radius:99px"></div>
+                </div>
+                <span style="font-size:0.8rem;color:#64748b">${pct}%</span>
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function updateStatus(studentId, sel) {
+  const data = getData();
+  if (!data.grades[selectedAssign]) data.grades[selectedAssign] = {};
+  if (!data.grades[selectedAssign][studentId]) data.grades[selectedAssign][studentId] = { score: 0 };
+  data.grades[selectedAssign][studentId].status = sel.value;
+  sel.className = `submit-sel s-${sel.value}`;
+}
+
+function updateScore(studentId, inp) {
+  const data = getData();
+  if (!data.grades[selectedAssign]) data.grades[selectedAssign] = {};
+  if (!data.grades[selectedAssign][studentId]) data.grades[selectedAssign][studentId] = { status: 'submitted' };
+  data.grades[selectedAssign][studentId].score = parseFloat(inp.value) || 0;
+}
+
+function saveGrades() { toast('💾 บันทึกคะแนนแล้ว'); }
+
+// ===== INIT =====
+renderAuth('login');
+</script>
